@@ -1,0 +1,44 @@
+1 задача
+
+select count(distinct fullvisitorid) as "число уникальных клиентов", (select count(*) from marketing_analyst_test_1 where hitNumber = 1) as "число совершенных сессий" from marketing_analyst_test_1;
+
+число клиентов - 1119390
+число сессий - 1182410
+
+
+2 задача
+select (select count(*) from (select distinct fullVisitorID,
+	 SUBSTRING(pagePath, charindex('\?', pagePath), LEN(pagePath) - charindex('\?', pagePath) + 1) as "URL без параметра",
+	searchText
+	from marketing_analyst_test_1 where type LIKE '%PAGE') as a)/ (select count(*) from marketing_analyst_test_1 where hitNumber = 1) as "среднее число страниц на сессию";
+
+среднее число страниц на сессию - 3
+
+3 задача
+with a AS (select fullVisitorID, visitStartTime,brand, hitNumber, pagePath, searchText
+            from marketing_analyst_test_1
+              WHERE pagePath LIKE '%search%'
+              and type LIKE '%PAGE'),
+  b AS (select fullVisitorID, visitStartTime,brand, hitNumber, pagePath, searchText
+            from marketing_analyst_test_1
+              WHERE pagePath not LIKE '%search%' and
+              brand LIKE '%Philips%' -- маска подстроки
+              and type LIKE '%PAGE')
+select top 10 a.searchText, count(b.searchText) as ranking
+  from a join b on (a.fullVisitorID = b.fullVisitorID)
+    where a.fullVisitorID = b.fullVisitorID and -- один и тот же клиент переходил с поиска на карточку
+      a.visitStartTime = b.visitStartTime and -- строгое условие, что в карточку товара мы зашли в рамках той же последовательной сессии что и использовали поиск
+            a.hitNumber < b.hitNumber -- нестрогое условие, что посещение поиска это хит до захода в карточку товара. Можно ставить строгое равенство вида заход_в_карточку=поиск+1,
+											-- но искать будет дольше и выдаст мало
+    group by a.searchText
+	order by ranking desc;
+  
+136959684
+136766502
+135997677
+135923168
+135886234
+12972XV+S2
+12258XV+S2
+10713255
+аузнер Штефан
